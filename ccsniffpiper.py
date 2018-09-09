@@ -41,20 +41,21 @@
 """
 
 import argparse
-import os
-import sys
-import select
-import time
-import stat
-import errno
-import StringIO
-import logging.handlers
-import struct
-import threading
 import binascii
+import errno
+import logging.handlers
+import os
+import select
+import stat
+import StringIO
+import struct
+import sys
+import threading
+import time
+from locale import str
+
 import usb.core
 import usb.util
-from locale import str
 
 __version__ = '0.0.1'
 
@@ -314,7 +315,8 @@ class CC2531:
             raise IOError("Device not found")
 
         self.dev.set_configuration() # must call this to establish the USB's "Config"
-        self.name = usb.util.get_string(self.dev, 256, 2) # get name from USB descriptor
+        # self.name = usb.util.get_string(self.dev, 256, 2) # get name from USB descriptor
+        self.name = "CC2135 USB dongle sniffer"
         self.ident = self.dev.ctrl_transfer(CC2531.DIR_IN, CC2531.GET_IDENT, 0, 0, 256) # get identity from Firmware command
 
         # power on radio, wIndex = 4
@@ -362,11 +364,13 @@ class CC2531:
                 else:
                     raise e
 
-#             print "RECV>> %s" % binascii.hexlify(bytesteam)
+            print "RECV>> %s" % binascii.hexlify(bytesteam)
 
             if len(bytesteam) >= 3:
                 (cmd, cmdLen) = struct.unpack_from("<BH", bytesteam)
                 bytesteam = bytesteam[3:]
+                # print "CMD>> %s" % cmd
+                # print "LEN>> %s" % cmdLen
                 if len(bytesteam) == cmdLen:
                     # buffer contains the correct number of bytes
                     if CC2531.COMMAND_FRAME == cmd:
@@ -615,4 +619,3 @@ if __name__ == '__main__':
             snifferDev.stop()
         dump_stats()
         sys.exit(0)
-
